@@ -1,6 +1,6 @@
 import bgImage from "../assets/monimage.jpg";
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Home, BedDouble, Bath, Maximize, Phone, Mail, Clock, ArrowRight, ShieldCheck, Star, Users, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Home, BedDouble, Bath, Maximize, Phone, Mail, Clock, ArrowRight, ShieldCheck, Users, ChevronDown } from 'lucide-react';
 
 export default function ImmobilierVitrineImageBG() {
   const [isScrolled, setIsScrolled] = useState(false);
