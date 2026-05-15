@@ -1,13 +1,60 @@
 import bgImage from "../assets/monimage.jpg";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Home, BedDouble, Bath, Maximize, Phone, Mail, Clock, ArrowRight, ShieldCheck, Users, ChevronDown } from 'lucide-react';
+
+// --- COMPOSANT ANIMATION AU SCROLL ---
+// Utilise l'IntersectionObserver pour déclencher les classes CSS d'animation
+function ScrollReveal({ children, className = "", delay = "delay-0", direction = "up" }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target); // On anime une seule fois
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const directions = {
+    up: "translate-y-12",
+    down: "-translate-y-12",
+    left: "translate-x-12",
+    right: "-translate-x-12",
+    none: "opacity-0 scale-95"
+  };
+
+  const baseTranslation = directions[direction] || "translate-y-12";
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-1000 ease-out ${delay} ${
+        isVisible 
+          ? "opacity-100 translate-y-0 translate-x-0 scale-100" 
+          : `opacity-0 ${baseTranslation}`
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function ImmobilierVitrineImageBG() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
-  // Détecter le scroll pour afficher/masquer le fond de la navbar
+  // Détecter le scroll pour la navbar et l'effet Parallaxe
   useEffect(() => {
     const handleScroll = () => {
+      setScrollY(window.scrollY);
       if (window.scrollY > 50) {
         setIsScrolled(true);
       } else {
@@ -15,7 +62,7 @@ export default function ImmobilierVitrineImageBG() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -57,11 +104,11 @@ export default function ImmobilierVitrineImageBG() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased scroll-smooth">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased scroll-smooth overflow-x-hidden">
       
       {/* 1. BARRE DE NAVIGATION DYNAMIQUE */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled 
             ? "bg-white/95 border-b border-slate-200/60 shadow-sm h-20" 
             : "bg-transparent h-24"
@@ -72,25 +119,25 @@ export default function ImmobilierVitrineImageBG() {
             <div className="p-2 bg-emerald-600 text-white rounded-lg">
               <Home size={20} />
             </div>
-            <span className={`text-lg font-bold tracking-widest transition-colors ${
+            <span className={`text-lg font-bold tracking-widest transition-colors duration-500 ${
               isScrolled ? "text-slate-900" : "text-white"
             }`}>
               RTH<span className="text-emerald-600">IMMO</span>
             </span>
           </div>
           
-          <div className={`hidden md:flex items-center gap-10 text-xs uppercase tracking-widest font-semibold transition-colors ${
+          <div className={`hidden md:flex items-center gap-10 text-xs uppercase tracking-widest font-semibold transition-colors duration-500 ${
             isScrolled ? "text-slate-600" : "text-slate-200"
           }`}>
-            <a href="#accueil" className="hover:text-emerald-500 transition-colors">Accueil</a>
-            <a href="#biens" className="hover:text-emerald-500 transition-colors">Nos Biens</a>
-            <a href="#services" className="hover:text-emerald-500 transition-colors">Services</a>
-            <a href="#contact" className="hover:text-emerald-500 transition-colors">Contact</a>
+            <a href="#accueil" className="hover:text-emerald-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:bg-emerald-500 after:h-[2px] after:w-0 hover:after:w-full after:transition-all">Accueil</a>
+            <a href="#biens" className="hover:text-emerald-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:bg-emerald-500 after:h-[2px] after:w-0 hover:after:w-full after:transition-all">Nos Biens</a>
+            <a href="#services" className="hover:text-emerald-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:bg-emerald-500 after:h-[2px] after:w-0 hover:after:w-full after:transition-all">Services</a>
+            <a href="#contact" className="hover:text-emerald-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:bg-emerald-500 after:h-[2px] after:w-0 hover:after:w-full after:transition-all">Contact</a>
           </div>
 
           <a 
             href="#contact" 
-            className={`hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl border transition-all ${
+            className={`hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl border transition-all duration-500 ${
               isScrolled 
                 ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700" 
                 : "border-white bg-transparent text-white hover:bg-white hover:text-slate-950"
@@ -101,35 +148,43 @@ export default function ImmobilierVitrineImageBG() {
         </div>
       </nav>
 
-      {/* 2. SECTION ACCUEIL */}
+      {/* 2. SECTION ACCUEIL (AVEC EFFET PARALLAXE FLUIDE) */}
       <section
         id="accueil"
-        className="relative min-h-screen flex flex-col justify-center items-center bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${bgImage})`,
-        }}
+        className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden"
       >
-        {/* Voile sombre classique pour assurer l'excellent contraste du texte blanc */}
-        <div className="absolute inset-0 bg-slate-950/50"></div> 
+        {/* Div d'arrière-plan gérant l'effet parallaxe via translation 3D */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
+          style={{
+            backgroundImage: `url(${bgImage})`,
+            transform: `translate3d(0, ${scrollY * 0.4}px, 0)`,
+          }}
+        ></div>
+
+        {/* Voile sombre classique */}
+        <div className="absolute inset-0 bg-slate-950/50 z-0"></div> 
         
         {/* Contenu principal centré */}
         <div className="max-w-4xl mx-auto px-6 relative z-10 text-center text-white space-y-8 mt-12 w-full">
           
-          <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold border-b border-emerald-500/30 pb-3 max-w-xs mx-auto">
-            Haute Synergie Immobilière
-          </p>
-          
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight leading-tight">
-            L'art de vivre au cœur de <br />
-            <span className="italic font-normal text-emerald-300">votre futur domaine</span>
-          </h1>
-          
-          <p className="text-base sm:text-lg text-slate-200 max-w-2xl mx-auto leading-relaxed text-justify">
-            Depuis plus d'une décennie, notre cabinet conseille et accompagne une clientèle exigeante dans la quête, l'estimation et l'acquisition de propriétés de prestige. De la première étude de marché jusqu'à la remise définitive des clés, nous vous garantissent une expérience immobilière sereine, transparente et rigoureusement confidentielle.
-          </p>
+          <div className="animate-fade-in space-y-6">
+            <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold border-b border-emerald-500/30 pb-3 max-w-xs mx-auto opacity-0 translate-y-4 animate-[slideUp_0.8s_ease-out_0.2s_forwards]">
+              Haute Synergie Immobilière
+            </p>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight leading-tight opacity-0 translate-y-6 animate-[slideUp_0.8s_ease-out_0.4s_forwards]">
+              L'art de vivre au cœur de <br />
+              <span className="italic font-normal text-emerald-300">votre futur domaine</span>
+            </h1>
+            
+            <p className="text-base sm:text-lg text-slate-200 max-w-2xl mx-auto leading-relaxed text-justify opacity-0 translate-y-6 animate-[slideUp_0.8s_ease-out_0.6s_forwards]">
+              Depuis plus d'une décennie, notre cabinet conseille et accompagne une clientèle exigeante dans la quête, l'estimation et l'acquisition de propriétés de prestige. De la première étude de marché jusqu'à la remise définitive des clés, nous vous garantissons une expérience immobilière sereine, transparente et rigoureusement confidentielle.
+            </p>
+          </div>
 
-          {/* BARRE DE RECHERCHE AVEC COINS ARRONDIS (rounded-2xl) ET BOUTON AJUSTÉ */}
-          <div className="bg-white p-4 rounded-2xl shadow-2xl border border-slate-200/50 flex flex-col md:flex-row gap-4 max-w-2xl mx-auto text-slate-800">
+          {/* BARRE DE RECHERCHE ANIMÉE */}
+          <div className="opacity-0 scale-95 animate-[fadeInScale_0.9s_ease-out_0.8s_forwards] bg-white p-4 rounded-2xl shadow-2xl border border-slate-200/50 flex flex-col md:flex-row gap-4 max-w-2xl mx-auto text-slate-800">
             <div className="flex-1 flex items-center gap-3 px-3 py-2 border-b md:border-b-0 md:border-r border-slate-100 last:border-0">
               <MapPin className="text-emerald-600 shrink-0" size={20} />
               <div className="text-left w-full">
@@ -151,14 +206,13 @@ export default function ImmobilierVitrineImageBG() {
               </div>
             </div>
             
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 shrink-0">
+            <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-emerald-600/20">
               <Search size={18} /> Rechercher
             </button>
           </div>
 
         </div>
 
-        {/* MODIFICATION ICI : L'indicateur est maintenant enveloppé dans un lien pointant vers #biens */}
         <a 
           href="#biens" 
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 text-white/60 animate-bounce hidden sm:flex flex-col items-center gap-1 cursor-pointer hover:text-emerald-400 transition-colors"
@@ -168,131 +222,142 @@ export default function ImmobilierVitrineImageBG() {
         </a>
       </section>
 
-      {/* 3. NOS CHIFFRES CLÉS */}
-      <section className="py-16 bg-white border-y border-slate-100">
+      {/* 3. NOS CHIFFRES CLÉS (RÉVÉLATION UN PAR UN) */}
+      <section className="py-16 bg-white border-y border-slate-100 relative z-20">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
+          <ScrollReveal delay="delay-0">
             <p className="text-5xl font-extrabold text-emerald-600">12+</p>
             <p className="text-base font-medium text-slate-600 mt-2">Ans d'expérience</p>
-          </div>
-          <div>
+          </ScrollReveal>
+          <ScrollReveal delay="duration-[1200ms] md:delay-150">
             <p className="text-5xl font-extrabold text-emerald-600">450+</p>
             <p className="text-base font-medium text-slate-600 mt-2">Biens vendus</p>
-          </div>
-          <div>
+          </ScrollReveal>
+          <ScrollReveal delay="duration-[1400ms] md:delay-300">
             <p className="text-5xl font-extrabold text-emerald-600">98%</p>
             <p className="text-base font-medium text-slate-600 mt-2">Clients satisfaits</p>
-          </div>
-          <div>
+          </ScrollReveal>
+          <ScrollReveal delay="duration-[1600ms] md:delay-450">
             <p className="text-5xl font-extrabold text-emerald-600">15</p>
             <p className="text-base font-medium text-slate-600 mt-2">Conseillers dévoués</p>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* 4. SELECTION DE BIENS */}
       <section id="biens" className="py-28 max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16">
+        <ScrollReveal direction="up" className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16">
           <div>
             <h2 className="text-4xl font-extrabold text-slate-950 tracking-tight">Biens en Vedette</h2>
             <p className="text-slate-600 mt-3 text-lg">Un aperçu de nos opportunités les plus exclusives.</p>
           </div>
           <a 
-  href="/catalogue" 
-  className="mt-5 md:mt-0 inline-flex items-center gap-2 text-emerald-600 font-semibold hover:text-emerald-700 transition-colors group"
->
-  Explorer le catalogue complet 
-  <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
-</a>
-        </div>
+            href="/catalogue" 
+            className="mt-5 md:mt-0 inline-flex items-center gap-2 text-emerald-600 font-semibold hover:text-emerald-700 transition-colors group"
+          >
+            Explorer le catalogue complet 
+            <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
+          </a>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {properties.map((item) => (
-            <div key={item.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 group flex flex-col h-full">
-              <div className="relative overflow-hidden aspect-[4/3]">
-                <span className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm text-emerald-700 font-bold text-xs px-3 py-1 rounded-full shadow-inner border border-emerald-100">
-                  {item.tag}
-                </span>
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              
-              <div className="p-7 flex flex-col flex-1">
-                <span className="text-2xl font-bold text-emerald-600 mb-2">{item.price}</span>
-                <h3 className="font-bold text-lg text-slate-950 group-hover:text-emerald-600 transition-colors leading-snug line-clamp-1">{item.title}</h3>
-                
-                <p className="flex items-center gap-1.5 text-slate-500 text-sm mt-1.5 mb-7">
-                  <MapPin size={15} /> {item.location}
-                </p>
+          {properties.map((item, index) => {
+            const delays = ["delay-0", "md:delay-150", "md:delay-300"];
+            return (
+              <ScrollReveal key={item.id} delay={delays[index]} direction="up" className="h-full">
+                <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 group flex flex-col h-full hover:-translate-y-2">
+                  <div className="relative overflow-hidden aspect-[4/3]">
+                    <span className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm text-emerald-700 font-bold text-xs px-3 py-1 rounded-full shadow-inner border border-emerald-100">
+                      {item.tag}
+                    </span>
+                    <img 
+                      src={item.image} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                  </div>
+                  
+                  <div className="p-7 flex flex-col flex-1">
+                    <span className="text-2xl font-bold text-emerald-600 mb-2">{item.price}</span>
+                    <h3 className="font-bold text-lg text-slate-950 group-hover:text-emerald-600 transition-colors leading-snug line-clamp-1">{item.title}</h3>
+                    
+                    <p className="flex items-center gap-1.5 text-slate-500 text-sm mt-1.5 mb-7">
+                      <MapPin size={15} /> {item.location}
+                    </p>
 
-                <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-100 mt-auto text-slate-700">
-                  <div className="flex items-center gap-2 text-sm">
-                    <BedDouble size={18} className="text-slate-400" />
-                    <span className="font-semibold">{item.beds} <span className="text-xs font-normal text-slate-400">Chb</span></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Bath size={18} className="text-slate-400" />
-                    <span className="font-semibold">{item.baths} <span className="text-xs font-normal text-slate-400">Sdb</span></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Maximize size={18} className="text-slate-400" />
-                    <span className="font-semibold">{item.size}</span>
+                    <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-100 mt-auto text-slate-700">
+                      <div className="flex items-center gap-2 text-sm">
+                        <BedDouble size={18} className="text-slate-400" />
+                        <span className="font-semibold">{item.beds} <span className="text-xs font-normal text-slate-400">Chb</span></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Bath size={18} className="text-slate-400" />
+                        <span className="font-semibold">{item.baths} <span className="text-xs font-normal text-slate-400">Sdb</span></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Maximize size={18} className="text-slate-400" />
+                        <span className="font-semibold">{item.size}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </ScrollReveal>
+            );
+          })}
         </div>
       </section>
 
       {/* 5. SERVICES / POURQUOI NOUS REJOINDRE */}
       <section id="services" className="bg-emerald-50/40 py-28 border-y border-emerald-100/30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <ScrollReveal direction="up" className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-4xl font-extrabold text-slate-950 tracking-tight">Plus qu'une Agence</h2>
             <p className="text-slate-600 mt-3 text-lg leading-relaxed">Une expertise transparente pour des résultats exceptionnels.</p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid md:grid-cols-3 gap-10">
-            <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
-                <ShieldCheck size={28} />
+            <ScrollReveal direction="left" delay="delay-0">
+              <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
+                  <ShieldCheck size={28} />
+                </div>
+                <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Accompagnement Intégral</h3>
+                <p className="text-slate-600 leading-relaxed text-base">
+                  Du premier conseil juridique à la signature, nous vous guidons en toute sérénité.
+                </p>
               </div>
-              <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Accompagnement Intégral</h3>
-              <p className="text-slate-600 leading-relaxed text-base">
-                Du premier conseil juridique à la signature, nous vous guidons en toute sérénité.
-              </p>
-            </div>
+            </ScrollReveal>
 
-            <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
-                <Users size={28} />
+            <ScrollReveal direction="up" delay="md:delay-150">
+              <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
+                  <Users size={28} />
+                </div>
+                <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Réseau d'Experts</h3>
+                <p className="text-slate-600 leading-relaxed text-base">
+                  Architectes, notaires, courtiers : bénéficiez de notre réseau de partenaires certifiés.
+                </p>
               </div>
-              <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Réseau d'Experts</h3>
-              <p className="text-slate-600 leading-relaxed text-base">
-                Architectes, notaires, courtiers : bénéficiez de notre réseau de partenaires certifiés.
-              </p>
-            </div>
+            </ScrollReveal>
 
-            <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
-                <Clock size={28} />
+            <ScrollReveal direction="right" delay="md:delay-300">
+              <div className="bg-white p-9 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-7 border border-emerald-200/50">
+                  <Clock size={28} />
+                </div>
+                <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Disponibilité Totale</h3>
+                <p className="text-slate-600 leading-relaxed text-base">
+                  Votre projet n'attend pas. Nos conseillers sont réactifs et disponibles 6j/7.
+                </p>
               </div>
-              <h3 className="font-bold text-xl text-slate-950 mb-3 tracking-tight">Disponibilité Totale</h3>
-              <p className="text-slate-600 leading-relaxed text-base">
-                Votre projet n'attend pas. Nos conseillers sont réactifs et disponibles 6j/7.
-              </p>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
 
       {/* 6. FORMULAIRE DE CONTACT & INFORMATIONS */}
       <section id="contact" className="py-28 max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-12 gap-0 bg-white rounded-[32px] border border-slate-100 shadow-2xl shadow-slate-900/5 overflow-hidden">
+        <ScrollReveal direction="up" className="grid lg:grid-cols-12 gap-0 bg-white rounded-[32px] border border-slate-100 shadow-2xl shadow-slate-900/5 overflow-hidden">
           
           <div className="lg:col-span-5 bg-slate-950 text-white p-10 lg:p-16 flex flex-col justify-between relative">
             <div className="space-y-6 relative z-10">
@@ -300,17 +365,17 @@ export default function ImmobilierVitrineImageBG() {
               <p className="text-slate-400 text-lg">Notre équipe est là pour écouter et réaliser vos ambitions immobilières.</p>
               
               <div className="space-y-5 pt-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><Phone size={18} /></div>
-                  <span className="text-base font-medium">+261 34 77 917 58</span>
+                <div className="flex items-center gap-4 group cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform"><Phone size={18} /></div>
+                  <span className="text-base font-medium group-hover:text-emerald-400 transition-colors">+261 34 77 917 58</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><Mail size={18} /></div>
-                  <span className="text-base font-medium">rthheritina@gmail.com</span>
+                <div className="flex items-center gap-4 group cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform"><Mail size={18} /></div>
+                  <span className="text-base font-medium group-hover:text-emerald-400 transition-colors">rthheritina@gmail.com</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><MapPin size={18} /></div>
-                  <span className="text-base font-medium">Ikianja Ambohimangakely</span>
+                <div className="flex items-center gap-4 group cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform"><MapPin size={18} /></div>
+                  <span className="text-base font-medium group-hover:text-emerald-400 transition-colors">Ikianja Ambohimangakely</span>
                 </div>
               </div>
             </div>
@@ -347,13 +412,13 @@ export default function ImmobilierVitrineImageBG() {
                 <textarea rows="5" placeholder="Décrivez votre projet..." className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-900 resize-none"></textarea>
               </div>
 
-              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30">
+              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 active:scale-[0.99]">
                 Envoyer ma demande
               </button>
             </form>
           </div>
 
-        </div>
+        </ScrollReveal>
       </section>
 
       {/* 7. FOOTER */}
